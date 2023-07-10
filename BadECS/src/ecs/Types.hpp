@@ -8,20 +8,7 @@ namespace ecs {
 	using ComponentId		= std::uint16_t;	// 0 - 65.535
 	using ArchetypeId		= std::uint16_t;	// 0 - 65.535
 
-	// Unsure about this atm...
-	// It's used for  type erasure
-	struct Column {
-		void*			elements;
-		std::size_t		elementSize;
-		std::size_t		elementCount;
-	};
-
-	// Used to store each  unique component list  only once
-	struct Archetype {
-		ecs::ArchetypeId			id;
-		std::vector<ComponentId>	componentList;
-		std::vector<Column>			components;
-	};
+	using TypeId			= std::size_t;		// std::size_t
 }
 
 #endif

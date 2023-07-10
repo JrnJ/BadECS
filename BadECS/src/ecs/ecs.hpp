@@ -13,7 +13,6 @@
 
 #include "Types.hpp"
 
-
 namespace ecs {
 	class Registry {
 	public:
@@ -24,25 +23,54 @@ namespace ecs {
 		}
 
 		void DestroyEntity(ecs::EntityId entityId) {
-			for (ecs::EntityId i = 0; i < entities.size(); ++i) {
-				if (entities[i] == entityId) {
-					entities.erase(entities.begin() + i);
-					entityComponents.erase(i);
+			for (ecs::EntityId entity = 0; entity < entities.size(); ++entity) {
+				if (entities[entity] == entityId) {
+					// System
+					// Loop over systems and check if entity is there
+					/*for (auto pair : systemComponents) {
+						for (ecs::ComponentId component : pair.second) {
+							if () {
+
+							}
+						}
+					}*/
+					/*for (auto pair : systems) {
+						System& system = *static_cast<System*>(pair.second);
+						for (ecs::EntityId systemEntity : system.entities) {
+							if (systemEntity == entityId) {
+								system.entities.
+								break;
+							}
+						}
+					}*/
+
+					entities.erase(entities.begin() + entity);
+					entityComponents.erase(entity);
+
 					break;
 				}
 			}
 		}
 
-		template<typename T>
+		template<typename Component>
 		void RegisterComponent() {
 			// assert that component isn't already registered
-			componentTypes[typeid(T).hash_code()] = componentTypeCounter++;
+			componentTypes[typeid(Component).hash_code()] = componentTypeCounter++;
 		}
 
 		template<typename System, typename... Components>
-		void RegisterSystem() {
-			std::cout << "RegisterSystem called with " << sizeof...(Components) << " parameters." << std::endl;
-			((std::cout << "Parameter type: " << typeid(Components).name() << std::endl), ...);
+		System& RegisterSystem() {
+			// Make System
+			System system{};
+			systems.insert(std::make_pair(typeid(System).hash_code(), &system));
+
+			// Set Components
+			std::vector<ComponentId> components{};
+			((components.push_back(typeid(Components).hash_code())), ...);
+			systemComponents.insert(std::make_pair(typeid(system).hash_code(), components));
+
+			// Return System
+			return system;
 		}
 
 		//template<typename T>
@@ -52,8 +80,8 @@ namespace ecs {
 		//	entityComponents[entityId][componentTypes[typeid(T).hash_code()]] = new T(std::forward<T>(component));
 		//}
 		
-		template<typename T>
-		void AddComponent(ecs::EntityId entityId, T& component) {
+		template<typename Component>
+		void AddComponent(ecs::EntityId entityId, Component& component) {
 			// assert component doesn't exist
 			// entityComponents[entityId].push_back(componentTypes[typeid(T).hash_code()]);
 
@@ -61,14 +89,14 @@ namespace ecs {
 			// entity.components[std::type_index(typeid(Component))] = std::forward<Component>(component);
 			// entity.components[std::type_index(typeid(Component))] = new Component(std::forward<Component>(component));
 			// entityComponents[entityId][componentTypes[typeid(T).hash_code()]] = std::forward<T>(component);
-			entityComponents[entityId][componentTypes[typeid(T).hash_code()]] = std::move(&component);
+			entityComponents[entityId][componentTypes[typeid(Component).hash_code()]] = std::move(&component);
 		}
 
-		template<typename T>
+		template<typename Component>
 		void RemoveComponent(ecs::EntityId entityId) {
 			// assert component exists
 			//entityComponents[entityId].erase();
-			entityComponents[entityId].erase(componentTypes[typeid(T).hash_code()]);
+			entityComponents[entityId].erase(componentTypes[typeid(Component).hash_code()]);
 			/*for (ecs::EntityId i = 0; i < entityComponents[entityId].size(); ++i) {
 				if (entityComponents[entityId][i] == componentTypes[typeid(T).hash_code()]) {
 					entityComponents[entityId].erase(entityComponents[entityId].begin() + i);
@@ -77,20 +105,20 @@ namespace ecs {
 			}*/
 		}
 
-		template<typename T>
+		template<typename Component>
 		bool HasComponent(ecs::EntityId entityId) {
-			return entityComponents[entityId].contains(componentTypes[typeid(T).hash_code()]);
+			return entityComponents[entityId].contains(componentTypes[typeid(Component).hash_code()]);
 		}
 
-		template<typename T>
-		T& GetComponent(ecs::EntityId entityId) {
+		template<typename Component>
+		Component& GetComponent(ecs::EntityId entityId) {
 			// assert
-			return *static_cast<T*>(entityComponents[entityId][componentTypes[typeid(T).hash_code()]]);
+			return *static_cast<Component*>(entityComponents[entityId][componentTypes[typeid(Component).hash_code()]]);
 		}
 
 	private:
 		// Registered Components
-		std::unordered_map<std::size_t, ecs::ComponentId> componentTypes{};
+		std::unordered_map<ecs::TypeId, ecs::ComponentId> componentTypes{};
 		static inline ecs::ComponentId componentTypeCounter{ 0 };
 
 		// Entities
@@ -101,7 +129,8 @@ namespace ecs {
 		std::unordered_map<ecs::EntityId, std::unordered_map<ecs::ComponentId, void*>> entityComponents{};
 
 		// Systems
-		std::unordered_map<std::size_t, void*> systems{};
+		std::unordered_map<ecs::TypeId, void*> systems{};
+		std::unordered_map<ecs::TypeId, std::vector<ecs::ComponentId>> systemComponents{};
 	};
 }
 

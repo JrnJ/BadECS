@@ -61,24 +61,25 @@ int main() {
 	reg.DestroyEntity(block2);
 	reg.RemoveComponent<Rigidbody>(block3);
 
+	// Found
 	if (reg.HasComponent<Transform>(player)) {
 		Transform& tf = reg.GetComponent<Transform>(player);
 	}
 
+	// Not found
 	if (reg.HasComponent<Rigidbody>(block3)) {
 		Rigidbody& rb = reg.GetComponent<Rigidbody>(block3);
 	}
 	
-	reg.RegisterSystem<PhysicsSystem>();
-	reg.RegisterSystem<PhysicsSystem, Transform, Rigidbody>();
-	reg.RegisterSystem<PhysicsSystem, Transform, Rigidbody, Renderable>();
+	PhysicsSystem physicsSystem = reg.RegisterSystem<PhysicsSystem, Transform, Rigidbody>();
 
 	while (true) {
-		std::cout << "===[ ECS | Frame: " << frame << " ]===" << std::endl;
+		std::cout << "===[ ECS | Frame: " << frame << " \t]===" << std::endl;
 
+		// Update
+		physicsSystem.Update(reg);
 
-
-		// Get action
+		// Input
 		std::string input{};
 		std::cin >> input;
 
